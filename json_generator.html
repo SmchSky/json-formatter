@@ -1,0 +1,238 @@
+
+<h2 class="sr-only">大型 JSON 测试数据生成器</h2>
+<div style="padding: 1rem 0;">
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:12px; margin-bottom:1.5rem;">
+    <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+      <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 4px;">生成行数（格式化后）</p>
+      <p style="font-size:22px; font-weight:500; margin:0;" id="line-count">~1200 行</p>
+    </div>
+    <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+      <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 4px;">数据规模</p>
+      <select id="scale" style="font-size:15px; font-weight:500; background:transparent; border:none; color:var(--color-text-primary); cursor:pointer; width:100%; outline:none;">
+        <option value="small">小型 (~1000行)</option>
+        <option value="medium" selected>中型 (~3000行)</option>
+        <option value="large">大型 (~8000行)</option>
+      </select>
+    </div>
+    <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+      <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 4px;">数据主题</p>
+      <select id="theme" style="font-size:15px; font-weight:500; background:transparent; border:none; color:var(--color-text-primary); cursor:pointer; width:100%; outline:none;">
+        <option value="ecommerce">电商平台</option>
+        <option value="hospital">医院系统</option>
+        <option value="school">学校管理</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <button onclick="generate()" style="flex:1; min-width:120px;">生成 JSON</button>
+    <button onclick="downloadJSON()" id="dl-btn" style="flex:1; min-width:120px;" disabled>下载 .json 文件</button>
+    <button onclick="copyJSON()" id="cp-btn" style="flex:1; min-width:120px;" disabled>复制到剪贴板</button>
+  </div>
+
+  <div id="preview-box" style="display:none; background:var(--color-background-secondary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:1rem; font-family:var(--font-mono); font-size:12px; line-height:1.6; max-height:320px; overflow-y:auto; white-space:pre; color:var(--color-text-primary);" id="preview"></div>
+  <p id="status" style="font-size:13px; color:var(--color-text-secondary); margin:0;"></p>
+</div>
+
+<script>
+let generatedJSON = null;
+
+const rand = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const randFloat = (a,b) => parseFloat((Math.random()*(b-a)+a).toFixed(2));
+const uid = () => Math.random().toString(36).slice(2,10).toUpperCase();
+
+const names = ["李明","王芳","张伟","刘洋","陈静","赵磊","孙丽","周鑫","吴涛","郑娜","林峰","黄莉","徐阳","朱敏","马超"];
+const cities = ["北京","上海","广州","深圳","杭州","成都","南京","武汉","西安","苏州"];
+const tags = ["热销","新品","折扣","限量","推荐","清仓","季节","进口","有机","定制"];
+const statuses = ["active","inactive","pending","suspended"];
+const depts = ["研发部","市场部","销售部","财务部","人事部","运营部","客服部"];
+const categories = ["电子产品","服装","食品","家居","运动","图书","美妆","玩具"];
+
+function makeAddress() {
+  return {
+    province: rand(["广东","江苏","浙江","北京","上海","四川"]),
+    city: rand(cities),
+    district: rand(["朝阳区","海淀区","浦东新区","天河区","西湖区"]),
+    street: `${randInt(1,200)}号${rand(["创业","科技","文化","中山","人民"])}路`,
+    zip: String(randInt(100000,999999)),
+    coordinates: { lat: randFloat(20,53), lng: randFloat(73,135) }
+  };
+}
+
+function makeContact() {
+  return {
+    phone: `1${rand(["3","4","5","7","8"])}${String(randInt(100000000,999999999))}`,
+    email: `user_${uid().toLowerCase()}@example.com`,
+    wechat: `wx_${uid()}`,
+    emergency: { name: rand(names), relation: rand(["父母","配偶","子女","兄弟姐妹"]), phone: `1${rand(["3","5","8"])}${String(randInt(100000000,999999999))}` }
+  };
+}
+
+function makeProduct() {
+  const price = randFloat(9.9, 9999);
+  return {
+    id: `PROD-${uid()}`,
+    name: `${rand(["智能","高效","便携","专业","豪华"])}${rand(["设备","产品","套装","系列","版本"])} ${uid().slice(0,4)}`,
+    category: rand(categories),
+    price,
+    original_price: parseFloat((price * randFloat(1.1,1.5)).toFixed(2)),
+    stock: randInt(0, 9999),
+    sold: randInt(0, 50000),
+    rating: randFloat(3.0, 5.0),
+    reviews_count: randInt(0, 10000),
+    tags: Array.from({length: randInt(1,4)}, () => rand(tags)),
+    images: Array.from({length: randInt(1,5)}, (_,i) => `https://cdn.example.com/products/${uid()}/${i+1}.jpg`),
+    specs: {
+      weight: `${randFloat(0.1, 10)}kg`,
+      dimensions: `${randInt(5,100)}x${randInt(5,100)}x${randInt(2,50)}cm`,
+      color: rand(["黑色","白色","银色","金色","蓝色","红色","绿色"]),
+      material: rand(["铝合金","不锈钢","塑料","木质","布艺","皮革","玻璃"]),
+      warranty: `${randInt(1,3)}年`,
+      origin: rand(["中国","日本","德国","美国","韩国"])
+    },
+    logistics: {
+      free_shipping: Math.random() > 0.4,
+      delivery_days: randInt(1,7),
+      warehouse: rand(cities)
+    },
+    status: rand(["on_sale","off_shelf","draft"]),
+    created_at: `${randInt(2020,2024)}-${String(randInt(1,12)).padStart(2,'0')}-${String(randInt(1,28)).padStart(2,'0')}`
+  };
+}
+
+function makeOrder(userId) {
+  const items = Array.from({length: randInt(1,5)}, () => {
+    const p = randFloat(9.9, 999);
+    const q = randInt(1,10);
+    return { product_id:`PROD-${uid()}`, name:`商品${uid().slice(0,4)}`, price:p, quantity:q, subtotal:parseFloat((p*q).toFixed(2)) };
+  });
+  const total = parseFloat(items.reduce((s,i)=>s+i.subtotal,0).toFixed(2));
+  return {
+    order_id: `ORD-${uid()}`,
+    user_id: userId,
+    status: rand(["paid","shipped","delivered","cancelled","refunding"]),
+    items,
+    payment: { method: rand(["支付宝","微信支付","银联","信用卡"]), amount: total, fee: randFloat(0,5), paid_at:`2024-${String(randInt(1,12)).padStart(2,'0')}-${String(randInt(1,28)).padStart(2,'0')}T${String(randInt(0,23)).padStart(2,'0')}:${String(randInt(0,59)).padStart(2,'0')}:00Z` },
+    shipping: { address: makeAddress(), carrier: rand(["顺丰","圆通","中通","韵达","邮政"]), tracking: `SF${randInt(1000000000,9999999999)}`, estimated_delivery:`2024-${String(randInt(1,12)).padStart(2,'0')}-${String(randInt(1,28)).padStart(2,'0')}` },
+    total,
+    discount: randFloat(0, total*0.3),
+    notes: Math.random()>0.7 ? `请${rand(["尽快发货","放门口","工作日配送","联系前电话"])}` : null
+  };
+}
+
+function makeUser(n) {
+  const id = `USR-${uid()}`;
+  return {
+    id,
+    name: rand(names) + rand(["伟","芳","明","丽","强","静","超","敏"]),
+    age: randInt(18,65),
+    gender: rand(["male","female"]),
+    level: rand(["bronze","silver","gold","platinum","diamond"]),
+    points: randInt(0,99999),
+    balance: randFloat(0, 9999),
+    address: makeAddress(),
+    contact: makeContact(),
+    preferences: {
+      categories: Array.from({length:randInt(1,4)}, ()=>rand(categories)),
+      notifications: { email: Math.random()>0.3, sms: Math.random()>0.5, push: Math.random()>0.4 },
+      language: rand(["zh-CN","en-US","ja-JP"]),
+      currency: rand(["CNY","USD","JPY"])
+    },
+    orders: Array.from({length:randInt(1,n)}, ()=>makeOrder(id)),
+    created_at:`${randInt(2018,2024)}-${String(randInt(1,12)).padStart(2,'0')}-${String(randInt(1,28)).padStart(2,'0')}`,
+    last_login:`2024-${String(randInt(1,12)).padStart(2,'0')}-${String(randInt(1,28)).padStart(2,'0')}T${String(randInt(0,23)).padStart(2,'0')}:00:00Z`,
+    status: rand(statuses),
+    tags: Array.from({length:randInt(0,3)}, ()=>rand(["VIP","高频","风险","休眠","回流"]))
+  };
+}
+
+function makeEmployee() {
+  return {
+    id:`EMP-${uid()}`,
+    name: rand(names)+rand(["伟","芳","明"]),
+    department: rand(depts),
+    position: rand(["工程师","经理","总监","专员","助理","主管"]),
+    salary: randInt(8000,80000),
+    hire_date:`${randInt(2015,2023)}-${String(randInt(1,12)).padStart(2,'0')}-01`,
+    contact: makeContact(),
+    address: makeAddress(),
+    performance: Array.from({length:4}, (_,i)=>({quarter:`Q${i+1}`,score:randFloat(60,100),bonus:randInt(0,20000)})),
+    skills: Array.from({length:randInt(2,6)}, ()=>rand(["Java","Python","React","SQL","Excel","PPT","Photoshop","项目管理","数据分析"])),
+    status: rand(statuses)
+  };
+}
+
+function buildEcommerce(scale) {
+  const sizes = {small:{users:5,products:30,employees:10}, medium:{users:15,products:80,employees:30}, large:{users:40,products:200,employees:80}};
+  const s = sizes[scale];
+  return {
+    platform: { name:"示例电商平台", version:"3.2.1", generated_at: new Date().toISOString(),
+      stats:{ total_users:randInt(100000,9999999), total_orders:randInt(500000,50000000), total_revenue:randFloat(1000000,999999999), active_products:randInt(10000,500000) },
+      config:{ currency:"CNY", timezone:"Asia/Shanghai", maintenance_mode:false, features:{ live_stream:true, ai_recommend:true, social_commerce:Math.random()>0.5 } }
+    },
+    categories: categories.map(c=>({ id:`CAT-${uid()}`, name:c, parent:null, product_count:randInt(10,9999), icon:`/icons/${c}.svg`, visible:Math.random()>0.1 })),
+    products: Array.from({length:s.products}, makeProduct),
+    users: Array.from({length:s.users}, ()=>makeUser(randInt(2,8))),
+    employees: Array.from({length:s.employees}, makeEmployee),
+    promotions: Array.from({length:randInt(3,10)}, ()=>({
+      id:`PROMO-${uid()}`, name:`${rand(["双十一","618","年货节","会员日"])}活动`, type:rand(["discount","coupon","bundle","flash_sale"]),
+      discount_rate:randFloat(0.5,0.99), min_purchase:randFloat(0,500), max_discount:randFloat(0,200),
+      start:  `2024-${String(randInt(1,12)).padStart(2,'0')}-01T00:00:00Z`,
+      end:    `2024-${String(randInt(1,12)).padStart(2,'0')}-30T23:59:59Z`,
+      applicable_categories: Array.from({length:randInt(1,4)}, ()=>rand(categories)),
+      usage:{ total:randInt(0,100000), limit:randInt(10000,500000) }
+    })),
+    system_logs: Array.from({length:randInt(10,30)}, ()=>({
+      id:`LOG-${uid()}`, level:rand(["INFO","WARN","ERROR","DEBUG"]),
+      message:rand(["用户登录成功","支付超时重试","库存更新","缓存刷新","定时任务完成","第三方接口异常"]),
+      timestamp: new Date(Date.now()-randInt(0,86400000*30)).toISOString(),
+      meta:{ ip:`${randInt(1,255)}.${randInt(1,255)}.${randInt(1,255)}.${randInt(1,255)}`, duration_ms:randInt(1,5000) }
+    }))
+  };
+}
+
+function generate() {
+  const scale = document.getElementById('scale').value;
+  document.getElementById('status').textContent = '生成中...';
+  setTimeout(()=>{
+    const data = buildEcommerce(scale);
+    generatedJSON = JSON.stringify(data, null, 2);
+    const lines = generatedJSON.split('\n').length;
+    document.getElementById('line-count').textContent = `~${lines.toLocaleString()} 行`;
+    
+    const preview = document.getElementById('preview-box');
+    preview.style.display = 'block';
+    preview.textContent = generatedJSON.slice(0, 3000) + '\n\n... (预览截断，完整内容请下载) ...';
+    
+    document.getElementById('dl-btn').disabled = false;
+    document.getElementById('cp-btn').disabled = false;
+    document.getElementById('status').textContent = `已生成 ${lines.toLocaleString()} 行 / ${(new Blob([generatedJSON]).size/1024).toFixed(1)} KB`;
+  }, 30);
+}
+
+function downloadJSON() {
+  if(!generatedJSON) return;
+  const blob = new Blob([generatedJSON], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'test_data.json';
+  a.click();
+}
+
+function copyJSON() {
+  if(!generatedJSON) return;
+  navigator.clipboard.writeText(generatedJSON).then(()=>{
+    const btn = document.getElementById('cp-btn');
+    btn.textContent = '已复制！';
+    setTimeout(()=>{ btn.textContent = '复制到剪贴板'; }, 2000);
+  });
+}
+
+document.getElementById('scale').addEventListener('change', ()=>{
+  const map = {small:'~1000 行', medium:'~3000 行', large:'~8000 行'};
+  document.getElementById('line-count').textContent = map[document.getElementById('scale').value];
+});
+
+generate();
+</script>

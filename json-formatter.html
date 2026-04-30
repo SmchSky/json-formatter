@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500&family=Syne:wght@600;800&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #f5f7fc;
+      --surface: #ffffff;
+      --surface2: #eef1f8;
+      --border: #dce1ee;
+      --accent: #3b5bdb;
+      --accent2: #1e3a8a;
+      --accent-dim: #bfcff8;
+      --green: #16a34a;
+      --red: #dc2626;
+      --blue: #2563eb;
+      --purple: #7c3aed;
+      --str: #15803d;
+      --text: #1a2035;
+      --text2: #5a6a8a;
+      --text3: #a0adc0;
+      --font-mono: 'JetBrains Mono', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+      --font-ui: 'Syne', sans-serif;
+      --radius: 8px;
+      --trans: 0.18s ease;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      display: flex;
+      flex-direction: column;
+      background-image: radial-gradient(ellipse at 20% 0%, rgba(59, 91, 219, 0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 100%, rgba(124, 58, 237, 0.05) 0%, transparent 55%);
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .logo-sub {
+      color: var(--text2);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 400;
+      margin-left: 4px;
+      letter-spacing: 0.5px
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-wrap: wrap
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all var(--trans);
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(59, 91, 219, 0.07);
+      transform: translateY(-1px)
+    }
+
+    .btn:active {
+      transform: translateY(0)
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 600
+    }
+
+    .btn.primary:hover {
+      background: #2f4cc4;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(59, 91, 219, 0.3)
+    }
+
+    .btn.warning {
+      background: #ea902a;
+      color: #fff;
+      border-color: #ea902a;
+      font-weight: 600
+    }
+
+    .btn.warning:hover {
+      background: #b45309;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(217, 119, 6, 0.35);
+      transform: translateY(-1px)
+    }
+
+    .btn.success {
+      background: #16a34a;
+      color: #fff;
+      border-color: #16a34a;
+      font-weight: 600
+    }
+
+    .btn.success:hover {
+      background: #15803d;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
+      transform: translateY(-1px)
+    }
+
+    .btn.danger {
+      background: #dc2626;
+      color: #fff;
+      border-color: #dc2626;
+      font-weight: 600
+    }
+
+    .btn.danger:hover {
+      background: #b91c1c;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+      transform: translateY(-1px)
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0
+    }
+
+    .sep {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      margin: 0 4px
+    }
+
+    .indent-select {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    .indent-select select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      outline: none;
+      transition: border-color var(--trans);
+    }
+
+    .indent-select select:hover,
+    .indent-select select:focus {
+      border-color: var(--accent)
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 7px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 11px;
+      color: var(--text2);
+      flex-shrink: 0;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text3)
+    }
+
+    .status-dot.ok {
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(74, 222, 128, 0.5)
+    }
+
+    .status-dot.err {
+      background: var(--red);
+      box-shadow: 0 0 6px rgba(248, 113, 113, 0.5)
+    }
+
+    .status-dot.idle {
+      background: var(--text3)
+    }
+
+    .status-val {
+      color: var(--accent2)
+    }
+
+    /* ── Main layout ── */
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      gap: 0
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      min-width: 0
+    }
+
+    #rightPanel {
+      flex: 3.7;
+    }
+
+    .panel+.panel {
+      border-left: 1px solid var(--border)
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 11px;
+      color: var(--text2);
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .panel-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      letter-spacing: 1px;
+      text-transform: uppercase
+    }
+
+    .panel-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text3);
+    }
+
+    .panel-badge.active {
+      background: rgba(59, 91, 219, 0.1);
+      border-color: var(--accent-dim);
+      color: var(--accent)
+    }
+
+    /* ── Fold action buttons in output header ── */
+    .fold-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 10px;
+    }
+
+    /* Clickable panel-badge variant */
+    .panel-badge-btn {
+      cursor: pointer;
+      border: 1px solid;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    #btnExpandAll {
+      background: rgba(124, 58, 237, 0.10);
+      border-color: rgba(124, 58, 237, 0.35);
+      color: #7c3aed;
+    }
+
+    #btnExpandAll:hover {
+      background: rgba(124, 58, 237, 0.18);
+      border-color: rgba(124, 58, 237, 0.6);
+    }
+
+    #btnCollapseAll {
+      background: rgba(217, 119, 6, 0.10);
+      border-color: rgba(217, 119, 6, 0.35);
+      color: #b45309;
+    }
+
+    #btnCollapseAll:hover {
+      background: rgba(217, 119, 6, 0.18);
+      border-color: rgba(217, 119, 6, 0.6);
+    }
+
+    #outputBadge {
+      margin-left: auto;
+    }
+
+    /* ── Input panel ── */
+    .input-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden
+    }
+
+    #input {
+      width: 100%;
+      height: 100%;
+      padding: 20px 5px;
+      resize: none;
+      outline: none;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      border: none;
+      tab-size: 2;
+      caret-color: var(--accent);
+    }
+
+    #input::placeholder {
+      color: var(--text3);
+      font-style: italic
+    }
+
+    #input:focus {
+      outline: none;
+    }
+
+    /* ── Output edit ── */
+    #outputEditWrap {
+      display: none;
+      /* set to flex in enterEditMode */
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      flex-direction: row;
+      /* gutter | content */
+    }
+
+    /* Line-number gutter in edit mode */
+    #outputEditGutter {
+      flex-shrink: 0;
+      width: 66px;
+      overflow: hidden;
+      /* inner wrapper slides via translateY */
+      background: var(--bg);
+      user-select: none;
+    }
+
+    /* Inner wrapper: contains all line-number divs; shifted by translateY */
+    #outputEditGutterLines {
+      padding-top: 20px;
+      padding-right: 28px;
+      /* 右间距，可自由微调 */
+      padding-bottom: 40px;
+      /* extra bottom so last line never clips */
+      padding-left: 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text3);
+      text-align: right;
+      box-sizing: border-box;
+    }
+
+    /* Flex child that holds mirror + textarea */
+    #outputEditContent {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Mirror: same visual styling as textarea, renders highlighted text */
+    #outputEditMirror {
+      position: absolute;
+      inset: 0;
+      padding: 20px 20px 20px 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+      background: transparent;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow: hidden;
+      pointer-events: none;
+      tab-size: 2;
+      box-sizing: border-box;
+    }
+
+    /* Textarea: transparent text (caret still visible), sits on top */
+    #outputEdit {
+      position: absolute;
+      inset: 0;
+      padding: 20px 20px 20px 12px;
+      resize: none;
+      outline: none;
+      background: transparent;
+      color: transparent;
+      caret-color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      border: none;
+      tab-size: 2;
+      overflow: auto;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+
+    /* Red wavy underline for error character in mirror */
+    .error-wavy {
+      text-decoration: underline wavy #dc2626;
+      color: #dc2626;
+    }
+
+    /* EDIT button — always red */
+    #btnEditOutput {
+      background: rgba(220, 38, 38, 0.10);
+      border-color: rgba(220, 38, 38, 0.35);
+      color: #dc2626;
+    }
+
+    #btnEditOutput:hover {
+      background: rgba(220, 38, 38, 0.18);
+      border-color: rgba(220, 38, 38, 0.6);
+    }
+
+    /* DONE button (edit mode active) — always green */
+    #btnEditOutput.edit-active {
+      background: rgba(22, 163, 74, 0.12);
+      border-color: rgba(22, 163, 74, 0.35);
+      color: #16a34a;
+    }
+
+    #btnEditOutput.edit-active:hover {
+      background: rgba(22, 163, 74, 0.20);
+      border-color: rgba(22, 163, 74, 0.6);
+    }
+
+    /* ── Output panel ── */
+    .output-wrap {
+      flex: 1;
+      position: relative;
+      overflow: auto;
+      background: var(--bg)
+    }
+
+    #output {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre;
+      min-height: 100%;
+    }
+
+    .error-display {
+      padding: 16px 20px;
+      color: var(--red);
+      font-size: 12px;
+      line-height: 1.6;
+      background: rgba(248, 113, 113, 0.06);
+      border-left: 2px solid var(--red);
+      margin: 16px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      display: none;
+    }
+
+    .error-display.show {
+      display: block
+    }
+
+    /* ── Syntax colors ── */
+    .j-key {
+      color: var(--accent2)
+    }
+
+    .j-str {
+      color: var(--str)
+    }
+
+    .j-num {
+      color: var(--blue)
+    }
+
+    .j-bool {
+      color: var(--purple)
+    }
+
+    .j-null {
+      color: var(--red)
+    }
+
+    .j-brace {
+      color: var(--accent)
+    }
+
+    .j-bracket {
+      color: var(--text2)
+    }
+
+    .j-colon {
+      color: var(--text3)
+    }
+
+    .j-comma {
+      color: var(--text3)
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      z-index: 999;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1
+    }
+
+    #toast.success {
+      border-color: var(--green);
+      color: var(--green)
+    }
+
+    #toast.error {
+      border-color: var(--red);
+      color: var(--red)
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text3)
+    }
+
+    /* ── Resize handle ── */
+    .resizer {
+      width: 4px;
+      flex-shrink: 0;
+      background: var(--border);
+      cursor: col-resize;
+      transition: background var(--trans);
+      position: relative;
+    }
+
+    .resizer:hover,
+    .resizer.active {
+      background: var(--accent)
+    }
+
+    .resizer::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 40px;
+      border-radius: 3px;
+    }
+
+    /* ── Line numbers ── */
+    .gutter {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 20px 0;
+      pointer-events: none;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text3);
+      text-align: right;
+      width: 44px;
+      user-select: none;
+      background: var(--bg);
+    }
+
+    .input-wrap {
+      padding-left: 44px;
+      background: var(--bg);
+    }
+
+    /* ── Output gutter ── */
+    .output-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .output-wrap {
+      flex: 1;
+      overflow: auto;
+      background: var(--bg);
+    }
+
+    #outputGutter {
+      display: none;
+      /* replaced by inline gutter in line-based renderer */
+    }
+
+    /* ── Line-based renderer ── */
+    #output {
+      padding: 20px 20px 20px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .json-line {
+      display: flex;
+      align-items: flex-start;
+      min-height: calc(1.7em);
+      position: relative;
+    }
+
+    /* Gutter column: [line-number] [fold-icon] */
+    .ln {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-left: 16px;
+      padding-right: 4px;
+      color: var(--text3);
+      user-select: none;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* Fixed-width slot for the fold icon — keeps numbers aligned */
+    .fold-icon-slot {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Fold toggle button — VS Code style, always visible on foldable lines */
+    .fold-btn {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text3);
+      transition: color 0.12s ease;
+      pointer-events: all;
+    }
+
+    .fold-btn:hover {
+      color: var(--text2);
+    }
+
+    /* VS Code-style chevron glyphs via inline SVG mask */
+    .fold-btn.expanded::before {
+      content: '';
+      display: block;
+      width: 14px;
+      height: 14px;
+      background: currentColor;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%23000' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%23000' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+    }
+
+    .fold-btn.collapsed::before {
+      content: '';
+      display: block;
+      width: 14px;
+      height: 14px;
+      background: currentColor;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 4l4 4-4 4' stroke='%23000' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 4l4 4-4 4' stroke='%23000' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+    }
+
+    /* Line number text */
+    .ln-num {
+      min-width: 22px;
+      text-align: right;
+    }
+
+    /* Line content */
+    .lc {
+      flex: 1;
+      padding-left: 12px;
+      white-space: pre;
+    }
+
+    /* Collapsed summary badge */
+    .fold-summary {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 4px;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text2);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      vertical-align: middle;
+      line-height: 1.5;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      user-select: none;
+    }
+
+    .fold-summary:hover {
+      background: rgba(59, 91, 219, 0.1);
+      border-color: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .anim-in {
+      animation: fadeIn 0.2s ease forwards
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">{}</div>
+      JSON<span class="logo-sub">// FORMATTER</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="indent-select">
+        <span>Indent</span>
+        <select id="indentSize" title="缩进空格数">
+          <option value="2">2 spaces</option>
+          <option value="4">4 spaces</option>
+          <option value="tab">tab</option>
+        </select>
+      </div>
+      <div class="sep"></div>
+      <button class="btn primary" id="btnFormat" title="格式化 (Ctrl+Enter)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 4h12M2 8h8M2 12h10" />
+        </svg>
+        Format
+      </button>
+      <button class="btn warning" id="btnMinify" title="压缩">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 6l4-4 4 4M4 10l4 4 4-4" />
+        </svg>
+        Minify
+      </button>
+      <button class="btn success" id="btnCopy" title="复制输出 (Ctrl+Shift+C)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="5" y="5" width="8" height="9" rx="1.5" />
+          <path d="M3 11V3a1 1 0 011-1h7" />
+        </svg>
+        Copy
+      </button>
+      <div class="sep"></div>
+      <button class="btn danger" id="btnClear" title="清空 (Ctrl+Backspace)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 3l10 10M13 3L3 13" />
+        </svg>
+        Clear
+      </button>
+    </div>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-dot idle" id="statusDot"></div>
+      <span id="statusText">Ready</span>
+    </div>
+    <div class="status-item">Lines: <span class="status-val" id="statLines">–</span></div>
+    <div class="status-item">Size: <span class="status-val" id="statSize">–</span></div>
+    <div class="status-item">Keys: <span class="status-val" id="statKeys">–</span></div>
+    <div class="status-item">Depth: <span class="status-val" id="statDepth">–</span></div>
+  </div>
+
+  <main id="mainArea">
+    <div class="panel" id="leftPanel">
+      <div class="panel-header">
+        <span class="panel-label">Input</span>
+        <span class="panel-badge active" id="inputBadge">RAW</span>
+      </div>
+      <div class="input-wrap" id="inputWrap">
+        <div class="gutter" id="gutter"></div>
+        <textarea id="input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+          placeholder="请在此处粘贴原始 JSON"></textarea>
+      </div>
+    </div>
+
+    <div class="resizer" id="resizer"></div>
+
+    <div class="panel" id="rightPanel">
+      <div class="panel-header">
+        <span class="panel-label">Output</span>
+        <div class="fold-actions" id="foldActions">
+          <button class="panel-badge panel-badge-btn" id="btnExpandAll">EXPAND</button>
+          <button class="panel-badge panel-badge-btn" id="btnCollapseAll">COLLAPSE</button>
+        </div>
+        <button class="panel-badge panel-badge-btn" id="btnEditOutput" style="margin-left:6px">EDIT</button>
+        <span class="panel-badge" id="outputBadge">–</span>
+      </div>
+      <div class="output-body">
+        <div id="outputGutter"></div>
+        <div class="output-wrap" id="outputWrap">
+          <div class="error-display" id="errorDisplay"></div>
+          <div id="output"></div>
+          <div id="outputEditWrap">
+            <div id="outputEditGutter">
+              <div id="outputEditGutterLines"></div>
+            </div>
+            <div id="outputEditContent">
+              <div id="outputEditMirror"></div>
+              <textarea id="outputEdit" spellcheck="false" autocomplete="off" autocorrect="off"
+                autocapitalize="off"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script>
+    // ── Utilities ──────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    function showToast(msg, type = 'success', dur = 2000) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'show ' + (type);
+      clearTimeout(t._t);
+      t._t = setTimeout(() => {
+        t.className = ''
+      }, dur);
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + 'B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + 'KB';
+      return (bytes / 1048576).toFixed(2) + 'MB';
+    }
+
+    function countKeys(obj) {
+      if (typeof obj !== 'object' || obj === null) return 0;
+      let count = 0;
+      if (Array.isArray(obj)) {
+        obj.forEach(v => count += countKeys(v));
+      } else {
+        Object.keys(obj).forEach(k => {
+          count++;
+          count += countKeys(obj[k]);
+        });
+      }
+      return count;
+    }
+
+    function maxDepth(obj, d = 0) {
+      if (typeof obj !== 'object' || obj === null) return d;
+      const children = Array.isArray(obj) ? obj : Object.values(obj);
+      if (!children.length) return d + 1;
+      return Math.max(...children.map(v => maxDepth(v, d + 1)));
+    }
+
+    // ── Syntax highlight helpers ──────────────────────────────────
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Highlight a single line of already-formatted JSON text (no newlines)
+    function highlightLine(text) {
+      return text.replace(
+        /("(?:\\[\s\S]|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)\b|\b(true|false|null)\b|([{\}\[\]])|([,:])/g,
+        function (_, str, colon, num, kw, brace, punct) {
+          if (str !== undefined) {
+            const safe = esc(str);
+            if (colon) return '<span class="j-key">' + safe + '</span><span class="j-colon">' + esc(colon) + '</span>';
+            return '<span class="j-str">' + safe + '</span>';
+          }
+          if (num !== undefined) return '<span class="j-num">' + num + '</span>';
+          if (kw !== undefined) {
+            const c = kw === 'null' ? 'j-null' : 'j-bool';
+            return '<span class="' + c + '">' + kw + '</span>';
+          }
+          if (brace !== undefined) {
+            const c = (brace === '{' || brace === '}') ? 'j-brace' : 'j-bracket';
+            return '<span class="' + c + '">' + brace + '</span>';
+          }
+          if (punct !== undefined) {
+            const c = punct === ':' ? 'j-colon' : 'j-comma';
+            return '<span class="' + c + '">' + punct + '</span>';
+          }
+          return _;
+        }
+      );
+    }
+
+    // ── Line-based foldable renderer ─────────────────────────────
+    //
+    // Each line is rendered as:
+    //   <div class="json-line" data-line="N" [data-fold-start="M"]>
+    //     <div class="ln"><span class="fold-btn expanded">  (if foldable)</span>N</div>
+    //     <div class="lc">...highlighted content...</div>
+    //   </div>
+    //
+    // Lines inside a foldable block carry data-fold-id="<start-line-index>".
+    // Clicking the fold-btn hides those lines and shows the summary badge.
+
+    let _foldState = {}; // lineIndex -> true (collapsed)
+
+    function renderJSON(pretty) {
+      const lines = pretty.split('\n');
+      const n = lines.length;
+
+      // ── Pass 1: find matching brace/bracket pairs ──
+      // foldMap[openLineIdx] = { closeLineIdx, isArray, childCount }
+      const foldMap = {};
+      const stack = [];  // {lineIdx, ch}
+
+      // Also track child-count per opener
+      const childCount = {}; // openLineIdx -> number of direct children (keys or items)
+
+      for (let i = 0; i < n; i++) {
+        const raw = lines[i];
+        // Find the LAST opening or closing bracket on this line
+        // We process per character but use simple heuristic:
+        //   - A line ending with { or [ (after optional comma): it's an opener
+        //   - A line starting (after indent) with } or ] (with optional comma): it's a closer
+        const trimmed = raw.trimEnd();
+        const trimmedStart = raw.trimStart();
+
+        // Detect opener: line ends with { or [
+        const lastNonComma = trimmed.replace(/,$/, '').trim();
+        const lastCh = lastNonComma[lastNonComma.length - 1];
+        if (lastCh === '{' || lastCh === '[') {
+          stack.push({ lineIdx: i, ch: lastCh });
+          childCount[i] = 0;
+          // Count this line as a child of the parent opener
+          if (stack.length >= 2) {
+            const parentIdx = stack[stack.length - 2].lineIdx;
+            // only count direct children at this nesting level
+          }
+        }
+
+        // Detect closer: line starts with } or ] (or "  }" etc.)
+        const startCh = trimmedStart[0];
+        if ((startCh === '}' || startCh === ']') && stack.length > 0) {
+          const opener = stack.pop();
+          // only pair if compatible
+          const expected = opener.ch === '{' ? '}' : ']';
+          if (startCh === expected) {
+            const span = i - opener.lineIdx;
+            if (span > 1) { // only foldable if >1 line
+              foldMap[opener.lineIdx] = {
+                closeLineIdx: i,
+                isArray: opener.ch === '[',
+                childCount: 0 // will compute next pass
+              };
+            }
+          }
+        }
+      }
+
+      // ── Pass 2: compute child counts ──
+      // Direct children are lines at (baseIndent + one indent step).
+      // Closing braces/brackets at that level must be excluded — they are
+      // the end of a nested child, not a new entry.
+      for (const openIdx in foldMap) {
+        const { closeLineIdx } = foldMap[openIdx];
+        const baseIndent = lines[openIdx].match(/^(\s*)/)[1].length;
+
+        // Find the minimum indent level among lines between open and close
+        let minChildIndent = Infinity;
+        for (let i = parseInt(openIdx) + 1; i < closeLineIdx; i++) {
+          const t = lines[i].trim();
+          if (!t) continue;
+          const ind = lines[i].match(/^(\s*)/)[1].length;
+          if (ind > baseIndent && ind < minChildIndent) minChildIndent = ind;
+        }
+        if (minChildIndent === Infinity) { foldMap[openIdx].childCount = 0; continue; }
+
+        // Count lines at that indent level, skipping closing braces/brackets
+        let cc = 0;
+        for (let i = parseInt(openIdx) + 1; i < closeLineIdx; i++) {
+          const t = lines[i].trim();
+          if (!t) continue;
+          const ind = lines[i].match(/^(\s*)/)[1].length;
+          if (ind === minChildIndent && t[0] !== '}' && t[0] !== ']') cc++;
+        }
+        foldMap[openIdx].childCount = cc;
+      }
+
+      // ── Pass 3: assign each line to which opener block it belongs ──
+      // lineBlock[i] = Set of opener line indices that "own" line i (all ancestor folds)
+      // We only need the DIRECT (closest) opener for toggling
+      // For simplicity: line i belongs to opener O if openIdx < i <= closeLineIdx
+      // We need the innermost opener for each line to build the collapse hierarchy.
+      // Build a sorted list of openers
+      const openers = Object.keys(foldMap).map(Number).sort((a, b) => a - b);
+
+      // For each line, find its parent opener (closest one that contains it)
+      // Use a stack approach
+      const lineParent = new Array(n).fill(-1); // lineParent[i] = opener idx (-1 if none)
+      const ancestorStack = [];
+      for (let i = 0; i < n; i++) {
+        // Pop openers whose close is before i
+        while (ancestorStack.length > 0) {
+          const top = ancestorStack[ancestorStack.length - 1];
+          if (foldMap[top] && foldMap[top].closeLineIdx < i) {
+            ancestorStack.pop();
+          } else break;
+        }
+        if (ancestorStack.length > 0) {
+          lineParent[i] = ancestorStack[ancestorStack.length - 1];
+        }
+        // If this line is an opener, push it
+        if (foldMap[i] !== undefined) {
+          ancestorStack.push(i);
+        }
+      }
+
+      // ── Pass 4: build HTML ──
+      let lineNum = 1;
+      let html = '';
+
+      // Helper: is line i hidden due to any ancestor being collapsed?
+      function isHidden(i) {
+        let p = lineParent[i];
+        while (p !== -1) {
+          if (_foldState[p]) return true;
+          p = lineParent[p];
+        }
+        return false;
+      }
+
+      for (let i = 0; i < n; i++) {
+        const raw = lines[i];
+        const hidden = isHidden(i);
+        const isFoldable = foldMap[i] !== undefined;
+        const isCollapsed = isFoldable && !!_foldState[i];
+        const { closeLineIdx, isArray, childCount: cc } = isFoldable ? foldMap[i] : {};
+
+        const displayLn = hidden ? '' : lineNum;
+        if (!hidden) lineNum++;
+
+        const hiddenAttr = hidden ? ' style="display:none"' : '';
+        const foldAttr = isFoldable ? ` data-fold-open="${i}" data-fold-close="${closeLineIdx}"` : '';
+        const parentAttr = lineParent[i] !== -1 ? ` data-fold-child="${lineParent[i]}"` : '';
+
+        // Fold icon: always reserve the slot, only show button on foldable lines
+        let iconHtml;
+        if (isFoldable) {
+          const cls = isCollapsed ? 'collapsed' : 'expanded';
+          iconHtml = `<span class="fold-btn ${cls}" data-fold-open="${i}"></span>`;
+        } else {
+          iconHtml = `<span class="fold-icon-slot"></span>`;
+        }
+
+        // Line content
+        let lineContent = highlightLine(raw);
+
+        // If collapsed, append summary badge inline after the opening brace
+        let summaryHtml = '';
+        if (isCollapsed) {
+          const label = isArray
+            ? `${cc} item${cc !== 1 ? 's' : ''}`
+            : `${cc} key${cc !== 1 ? 's' : ''}`;
+          const closeTrimmed = lines[closeLineIdx].trim();
+          const trailingComma = closeTrimmed.endsWith(',') ? '<span class="j-comma">,</span>' : '';
+          const closeBrace = isArray ? '<span class="j-bracket">]</span>' : '<span class="j-brace">}</span>';
+          summaryHtml = `<span class="fold-summary" data-fold-open="${i}">${label}</span>${closeBrace}${trailingComma}`;
+        }
+
+        // Layout: [line-number] [icon] | [content]
+        html += `<div class="json-line"${hiddenAttr}${foldAttr}${parentAttr} data-line-idx="${i}">`
+          + `<div class="ln"><span class="ln-num">${displayLn}</span>${iconHtml}</div>`
+          + `<div class="lc">${lineContent}${summaryHtml}</div>`
+          + `</div>`;
+
+        // When collapsed, skip to close line (which we still render but hide)
+        if (isCollapsed) {
+          // Skip inner lines (they're hidden), but we still emit them for DOM state
+        }
+      }
+
+      return html;
+    }
+
+    function updateOutputGutter(lineCount) {
+      // no-op: gutter is now inline in each .json-line
+    }
+
+    // ── Wire fold click events (event delegation) ─────────────────
+    function wireFoldEvents() {
+      $('output').addEventListener('click', function (e) {
+        const btn = e.target.closest('.fold-btn, .fold-summary');
+        if (!btn) return;
+        const openIdx = parseInt(btn.dataset.foldOpen);
+        toggleFold(openIdx);
+      });
+    }
+
+    function toggleFold(openIdx) {
+      _foldState[openIdx] = !_foldState[openIdx];
+      // Re-render to apply new state
+      _reRender();
+    }
+
+    let _lastPretty = '';
+    function _reRender() {
+      if (!_lastPretty) return;
+      const out = $('output');
+      out.innerHTML = renderJSON(_lastPretty);
+    }
+
+    // ── Core format/minify ─────────────────────────────────────────
+    function getIndent() {
+      const v = $('indentSize').value;
+      return v === 'tab' ? '\t' : ' '.repeat(parseInt(v));
+    }
+
+    function doFormat() {
+      const raw = $('input').value.trim();
+      if (!raw) {
+        showToast('请先输入JSON', 'error');
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        const pretty = JSON.stringify(parsed, null, getIndent());
+        _foldState = {}; // reset fold state on new format
+        _lastPretty = pretty;
+        $('output').innerHTML = renderJSON(pretty);
+        $('errorDisplay').classList.remove('show');
+        setStatus('ok', 'Valid JSON');
+        updateStats(raw, parsed, pretty);
+        updateOutputGutter(pretty.split('\n').length);
+        $('outputBadge').textContent = 'FORMATTED';
+        $('outputBadge').className = 'panel-badge active';
+        $('output').classList.add('anim-in');
+        setTimeout(() => $('output').classList.remove('anim-in'), 300);
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    function doMinify() {
+      const raw = $('input').value.trim();
+      if (!raw) {
+        showToast('请先输入JSON', 'error');
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        const mini = JSON.stringify(parsed);
+        _foldState = {};
+        _lastPretty = mini;
+        $('output').innerHTML = renderJSON(mini);
+        $('errorDisplay').classList.remove('show');
+        setStatus('ok', 'Minified');
+        updateStats(raw, parsed, mini);
+        updateOutputGutter(1);
+        $('outputBadge').textContent = 'MINIFIED';
+        $('outputBadge').className = 'panel-badge active';
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    function doCopy() {
+      const text = _lastPretty;
+      if (!text.trim()) {
+        showToast('输出为空', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => showToast('✓  已复制到剪贴板')).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✓  已复制到剪贴板');
+      });
+    }
+
+    function doClear() {
+      $('input').value = '';
+      $('output').innerHTML = '';
+      _foldState = {};
+      _lastPretty = '';
+      $('errorDisplay').classList.remove('show');
+      setStatus('idle', 'Ready');
+      updateStats(null, null, null);
+      updateOutputGutter(0);
+      $('outputBadge').textContent = '–';
+      $('outputBadge').className = 'panel-badge';
+      $('input').focus();
+    }
+
+    function showError(msg) {
+      const d = $('errorDisplay');
+      d.innerHTML = '<strong>⚠ Parse Error</strong><br>' + escHtml(msg);
+      d.classList.add('show');
+      $('output').innerHTML = '';
+      updateOutputGutter(0);
+      setStatus('err', 'Invalid JSON');
+      $('outputBadge').textContent = 'error';
+      $('outputBadge').className = 'panel-badge';
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+
+    function setStatus(state, msg, color) {
+      const dot = $('statusDot');
+      dot.className = 'status-dot ' + state;
+      const st = $('statusText');
+      st.textContent = msg;
+      st.style.color = color || '';
+    }
+
+    function updateStats(raw, parsed, pretty) {
+      if (!parsed) {
+        ['statLines', 'statSize', 'statKeys', 'statDepth'].forEach(id => $(id).textContent = '–');
+        return;
+      }
+      const lines = (pretty || '').split('\n').length;
+      $('statLines').textContent = lines;
+      $('statSize').textContent = formatSize(new Blob([pretty || raw]).size);
+      $('statKeys').textContent = countKeys(parsed);
+      $('statDepth').textContent = maxDepth(parsed);
+    }
+
+    // ── Line numbers ───────────────────────────────────────────────
+    function updateGutter() {
+      const lines = $('input').value.split('\n').length;
+      const g = $('gutter');
+      let html = '';
+      for (let i = 1; i <= Math.max(lines, 1); i++) html += `<div style="padding:0 8px 0 4px;line-height:1.7;font-size:13px">${i}</div>`;
+      g.innerHTML = html;
+    }
+
+    // ── Resize handle ──────────────────────────────────────────────
+    (function () {
+      const r = $('resizer'), l = $('leftPanel'), rp = $('rightPanel'), m = $('mainArea');
+      let dragging = false, startX, startW;
+      r.addEventListener('mousedown', e => {
+        dragging = true;
+        startX = e.clientX;
+        startW = l.getBoundingClientRect().width;
+        r.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const tw = m.getBoundingClientRect().width;
+        const nw = Math.min(Math.max(startW + (e.clientX - startX), 200), tw - 200);
+        l.style.flex = 'none';
+        l.style.width = nw + 'px';
+        rp.style.flex = '1';
+      });
+      document.addEventListener('mouseup', () => {
+        dragging = false;
+        r.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    // ── Auto-format on paste ───────────────────────────────────────
+    $('input').addEventListener('paste', e => {
+      setTimeout(() => {
+        const v = $('input').value.trim();
+        if (v.startsWith('{') || v.startsWith('[')) {
+          doFormat();
+        }
+        updateGutter();
+      }, 0);
+    });
+    $('input').addEventListener('input', updateGutter);
+    $('input').addEventListener('scroll', () => {
+      $('gutter').style.marginTop = (-$('input').scrollTop) + 'px'
+    });
+    // outputGutter scroll sync no longer needed (inline gutter)
+    wireFoldEvents();
+
+    // ── Expand / Collapse All ──────────────────────────────────────
+    function doExpandAll() {
+      if (!_lastPretty) return;
+      _foldState = {};
+      _reRender();
+    }
+
+    function doCollapseAll() {
+      if (!_lastPretty) return;
+      // Build a temporary renderJSON run just to discover all foldable openers,
+      // then set every one to collapsed.
+      const lines = _lastPretty.split('\n');
+      const n = lines.length;
+      const stack = [];
+      for (let i = 0; i < n; i++) {
+        const trimmed = lines[i].trimEnd();
+        const lastCh = trimmed.replace(/,$/, '').trim().slice(-1);
+        if (lastCh === '{' || lastCh === '[') stack.push({ lineIdx: i, ch: lastCh });
+        const startCh = lines[i].trimStart()[0];
+        if ((startCh === '}' || startCh === ']') && stack.length > 0) {
+          const opener = stack.pop();
+          const expected = opener.ch === '{' ? '}' : ']';
+          if (startCh === expected && i - opener.lineIdx > 1) {
+            _foldState[opener.lineIdx] = true;
+          }
+        }
+      }
+      _reRender();
+    }
+
+    // ── Edit mode ─────────────────────────────────────────────────
+    let _editMode = false;
+
+    function enterEditMode() {
+      if (!_lastPretty) return;
+      // Remember which line the user was looking at
+      const savedScroll = $('outputWrap').scrollTop;
+      _editMode = true;
+      $('outputEdit').value = _lastPretty;
+      updateMirror(_lastPretty, -1);
+      updateOutputEditGutter();
+      $('outputEditWrap').style.display = 'flex';
+      $('output').style.display = 'none';
+      $('btnEditOutput').classList.add('edit-active');
+      $('btnEditOutput').textContent = 'DONE';
+      $('foldActions').style.opacity = '0.35';
+      $('foldActions').style.pointerEvents = 'none';
+      $('errorDisplay').classList.remove('show');
+      showToast('✏️  已进入编辑模式', 'success');
+      $('outputEdit').focus();
+      // focus() triggers browser scroll-to-cursor; override it on next frame
+      requestAnimationFrame(() => {
+        $('outputEdit').scrollTop = savedScroll;
+        $('outputEditMirror').scrollTop = savedScroll;
+        $('outputEditGutterLines').style.transform = `translateY(-${savedScroll}px)`;
+      });
+    }
+
+    function exitEditMode() {
+      // Capture scroll position before any DOM changes
+      const savedScroll = $('outputEdit').scrollTop;
+      const newText = $('outputEdit').value.trim();
+      if (!newText) {
+        // Empty — just exit without re-parsing
+        _editMode = false;
+        $('outputEditWrap').style.display = 'none';
+        $('output').style.display = '';
+        $('btnEditOutput').classList.remove('edit-active');
+        $('btnEditOutput').textContent = 'EDIT';
+        $('foldActions').style.opacity = '';
+        $('foldActions').style.pointerEvents = '';
+        requestAnimationFrame(() => { $('outputWrap').scrollTop = savedScroll; });
+        return;
+      }
+      try {
+        const parsed = JSON.parse(newText);
+        const pretty = JSON.stringify(parsed, null, getIndent());
+        _foldState = {};
+        _lastPretty = pretty;
+        $('output').innerHTML = renderJSON(pretty);
+        $('errorDisplay').classList.remove('show');
+        setStatus('ok', 'Valid JSON', '');
+        $('statLines').textContent = pretty.split('\n').length;
+        $('statSize').textContent = formatSize(new Blob([pretty]).size);
+        $('statKeys').textContent = countKeys(parsed);
+        $('statDepth').textContent = maxDepth(parsed);
+        $('outputBadge').textContent = 'FORMATTED';
+        $('outputBadge').className = 'panel-badge active';
+        _editMode = false;
+        $('outputEditWrap').style.display = 'none';
+        $('output').style.display = '';
+        $('btnEditOutput').classList.remove('edit-active');
+        $('btnEditOutput').textContent = 'EDIT';
+        $('foldActions').style.opacity = '';
+        $('foldActions').style.pointerEvents = '';
+        showToast('✓  已应用编辑并重新格式化', 'success');
+        // Restore scroll so user stays on the same line
+        requestAnimationFrame(() => { $('outputWrap').scrollTop = savedScroll; });
+      } catch (e) {
+        // Try to extract character position from error message (cross-browser)
+        function extractPos(msg, text) {
+          let m;
+          // Chrome: "at position N" or "at line N column M"
+          m = msg.match(/position (\d+)/);
+          if (m) return parseInt(m[1]);
+          m = msg.match(/line (\d+) col(?:umn)? (\d+)/);
+          if (m) {
+            const ls = text.split('\n');
+            const ln = parseInt(m[1]) - 1;
+            const col = parseInt(m[2]) - 1;
+            let pos = 0;
+            for (let i = 0; i < ln && i < ls.length; i++) pos += ls[i].length + 1;
+            return pos + col;
+          }
+          return -1;
+        }
+
+        const ta = $('outputEdit');
+        const pos = extractPos(e.message, ta.value);
+
+        // Update mirror with wavy underline at error position
+        updateMirror(ta.value, pos);
+
+        if (pos >= 0) {
+          const before = ta.value.slice(0, pos);
+          const errLine = (before.match(/\n/g) || []).length + 1;
+          const errCol = pos - before.lastIndexOf('\n');
+          const location = `第 ${errLine} 行第 ${errCol} 列`;
+          const d = $('errorDisplay');
+          d.innerHTML = `<strong>⚠ 编辑错误</strong> — ${location}<br><span style="opacity:.8">${escHtml(e.message)}</span>`;
+          d.classList.add('show');
+          const errMsg = `${location}有语法错误`;
+          setStatus('err', errMsg, 'var(--red)');
+          showToast('⚠  ' + errMsg, 'error', 4000);
+        } else {
+          const d = $('errorDisplay');
+          d.innerHTML = `<strong>⚠ 编辑错误</strong><br><span style="opacity:.8">${escHtml(e.message)}</span>`;
+          d.classList.add('show');
+          setStatus('err', 'JSON 语法错误', 'var(--red)');
+          showToast('⚠  JSON 语法错误', 'error', 4000);
+        }
+        // Stay in edit mode
+      }
+    }
+
+    // ── Mirror layer + edit gutter helpers ───────────────────────────
+    function updateMirror(text, pos) {
+      const mirror = $('outputEditMirror');
+      if (pos >= 0 && pos < text.length) {
+        mirror.innerHTML =
+          escHtml(text.slice(0, pos))
+          + `<span class="error-wavy">${escHtml(text[pos])}</span>`
+          + escHtml(text.slice(pos + 1));
+      } else {
+        mirror.textContent = text;
+      }
+    }
+
+    function updateOutputEditGutter() {
+      const lines = $('outputEdit').value.split('\n');
+      $('outputEditGutterLines').innerHTML = lines.map((_, i) =>
+        `<div>${i + 1}</div>`
+      ).join('');
+    }
+
+    // ── Wire buttons ───────────────────────────────────────────────
+    $('btnFormat').addEventListener('click', doFormat);
+    $('btnMinify').addEventListener('click', doMinify);
+    $('btnCopy').addEventListener('click', doCopy);
+    $('btnClear').addEventListener('click', doClear);
+    $('btnExpandAll').addEventListener('click', doExpandAll);
+    $('btnCollapseAll').addEventListener('click', doCollapseAll);
+    $('btnEditOutput').addEventListener('click', () => {
+      _editMode ? exitEditMode() : enterEditMode();
+    });
+
+    // Ctrl+Enter in outputEdit exits edit mode
+    $('outputEdit').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); exitEditMode(); }
+    });
+
+    // Sync mirror scroll with textarea scroll
+    $('outputEdit').addEventListener('scroll', () => {
+      const ta = $('outputEdit');
+      $('outputEditMirror').scrollTop = ta.scrollTop;
+      $('outputEditMirror').scrollLeft = ta.scrollLeft;
+      // Shift only the inner gutter content — gutter element stays in place
+      $('outputEditGutterLines').style.transform = `translateY(-${ta.scrollTop}px)`;
+    });
+
+    // Keep mirror + gutter in sync while typing; clear error wavy on edit
+    $('outputEdit').addEventListener('input', () => {
+      updateMirror($('outputEdit').value, -1);
+      updateOutputEditGutter();
+      $('errorDisplay').classList.remove('show');
+    });
+
+    // Auto-reformat when indent size changes (only if input has content)
+    $('indentSize').addEventListener('change', () => {
+      if ($('input').value.trim()) doFormat();
+    });
+
+    updateGutter();
+    $('input').focus();
+  </script>
+</body>
+
+</html>

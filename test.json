@@ -1,0 +1,51 @@
+{
+  "user": {
+    "id": 1001,
+    "name": "张三",
+    "age": 28,
+    "email": "zhangsan@example.com",
+    "isActive": true,
+    "address": {
+      "province": "广东省",
+      "city": "深圳市",
+      "district": "南山区",
+      "detail": {
+        "street": "科技园路",
+        "building": "C栋",
+        "floor": 15,
+        "roomNo": "1502"
+      }
+    }
+  },
+  "orders": [
+    {
+      "orderId": "ORD2025001",
+      "createTime": "2025-01-15 10:30:00",
+      "status": "paid",
+      "items": [
+        {
+          "productId": "P001",
+          "productName": "无线鼠标",
+          "price": 99.9,
+          "quantity": 2
+        },
+        {
+          "productId": "P002",
+          "productName": "机械键盘",
+          "price": 299.5,
+          "quantity": 1
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "theme": "dark",
+    "notifications": {
+      "email": true,
+      "sms": false,
+      "push": true
+    },
+    "language": "zh-CN",
+    "version": "1.2.0"
+  }
+}
