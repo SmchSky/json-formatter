@@ -376,10 +376,6 @@
       border-color: rgba(217, 119, 6, 0.6);
     }
 
-    #outputBadge {
-      margin-left: auto;
-    }
-
     /* ── Input panel ── */
     .input-wrap {
       flex: 1;
@@ -920,7 +916,6 @@
     <div class="panel" id="leftPanel">
       <div class="panel-header">
         <span class="panel-label">Input</span>
-        <span class="panel-badge active" id="inputBadge">RAW</span>
       </div>
       <div class="input-wrap" id="inputWrap">
         <div class="gutter" id="gutter"></div>
@@ -939,7 +934,6 @@
           <button class="panel-badge panel-badge-btn" id="btnCollapseAll">COLLAPSE</button>
         </div>
         <button class="panel-badge panel-badge-btn" id="btnEditOutput" style="margin-left:6px">EDIT</button>
-        <span class="panel-badge" id="outputBadge">–</span>
       </div>
       <div class="output-body">
         <div id="outputGutter"></div>
@@ -1277,8 +1271,6 @@
         setStatus('ok', 'Valid JSON');
         updateStats(raw, parsed, pretty);
         updateOutputGutter(pretty.split('\n').length);
-        $('outputBadge').textContent = 'FORMATTED';
-        $('outputBadge').className = 'panel-badge active';
         $('output').classList.add('anim-in');
         setTimeout(() => $('output').classList.remove('anim-in'), 300);
       } catch (e) {
@@ -1302,8 +1294,6 @@
         setStatus('ok', 'Minified');
         updateStats(raw, parsed, mini);
         updateOutputGutter(1);
-        $('outputBadge').textContent = 'MINIFIED';
-        $('outputBadge').className = 'panel-badge active';
       } catch (e) {
         showError(e.message);
       }
@@ -1335,8 +1325,6 @@
       setStatus('idle', 'Ready');
       updateStats(null, null, null);
       updateOutputGutter(0);
-      $('outputBadge').textContent = '–';
-      $('outputBadge').className = 'panel-badge';
       $('input').focus();
     }
 
@@ -1347,8 +1335,6 @@
       $('output').innerHTML = '';
       updateOutputGutter(0);
       setStatus('err', 'Invalid JSON');
-      $('outputBadge').textContent = 'error';
-      $('outputBadge').className = 'panel-badge';
     }
 
     function escHtml(s) {
@@ -1515,8 +1501,6 @@
         $('statSize').textContent = formatSize(new Blob([pretty]).size);
         $('statKeys').textContent = countKeys(parsed);
         $('statDepth').textContent = maxDepth(parsed);
-        $('outputBadge').textContent = 'FORMATTED';
-        $('outputBadge').className = 'panel-badge active';
         _editMode = false;
         $('outputEditWrap').style.display = 'none';
         $('output').style.display = '';
