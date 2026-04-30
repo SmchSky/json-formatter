@@ -349,8 +349,15 @@
     .fold-actions {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       margin-left: 10px;
+    }
+
+    .fold-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+      margin: 0 8px;
     }
 
     /* Clickable panel-badge variant */
@@ -361,27 +368,32 @@
       letter-spacing: 0.5px;
     }
 
-    #btnExpandAll {
+    #btnExpandAll,
+    #btnExpandLevel {
       background: rgba(124, 58, 237, 0.10);
       border-color: rgba(124, 58, 237, 0.35);
       color: #7c3aed;
     }
 
-    #btnExpandAll:hover {
+    #btnExpandAll:hover,
+    #btnExpandLevel:hover {
       background: rgba(124, 58, 237, 0.18);
       border-color: rgba(124, 58, 237, 0.6);
     }
 
-    #btnCollapseAll {
+    #btnCollapseAll,
+    #btnCollapseLevel {
       background: rgba(217, 119, 6, 0.10);
       border-color: rgba(217, 119, 6, 0.35);
       color: #b45309;
     }
 
-    #btnCollapseAll:hover {
+    #btnCollapseAll:hover,
+    #btnCollapseLevel:hover {
       background: rgba(217, 119, 6, 0.18);
       border-color: rgba(217, 119, 6, 0.6);
     }
+
 
     /* ── Input panel ── */
     .input-wrap {
@@ -429,7 +441,7 @@
     /* Line-number gutter in edit mode */
     #outputEditGutter {
       flex-shrink: 0;
-      width: 66px;
+      width: 68px;
       overflow: hidden;
       /* inner wrapper slides via translateY */
       background: var(--bg);
@@ -439,8 +451,7 @@
     /* Inner wrapper: contains all line-number divs; shifted by translateY */
     #outputEditGutterLines {
       padding-top: 20px;
-      padding-right: 28px;
-      /* 右间距，可自由微调 */
+      padding-right: 30px;
       padding-bottom: 40px;
       /* extra bottom so last line never clips */
       padding-left: 0;
@@ -937,10 +948,14 @@
       <div class="panel-header">
         <span class="panel-label">Output</span>
         <div class="fold-actions" id="foldActions">
-          <button class="panel-badge panel-badge-btn" id="btnExpandAll">EXPAND</button>
-          <button class="panel-badge panel-badge-btn" id="btnCollapseAll">COLLAPSE</button>
+          <button class="panel-badge panel-badge-btn" id="btnExpandAll" title="全部展开">EXPAND ALL</button>
+          <button class="panel-badge panel-badge-btn" id="btnExpandLevel" title="向下展开一级">+1</button>
+          <span class="fold-sep"></span>
+          <button class="panel-badge panel-badge-btn" id="btnCollapseAll" title="全部折叠">COLLAPSE ALL</button>
+          <button class="panel-badge panel-badge-btn" id="btnCollapseLevel" title="向上折叠一级">−1</button>
+          <span class="fold-sep"></span>
+          <button class="panel-badge panel-badge-btn" id="btnEditOutput">EDIT</button>
         </div>
-        <button class="panel-badge panel-badge-btn" id="btnEditOutput" style="margin-left:6px">EDIT</button>
       </div>
       <div class="output-body">
         <div id="outputGutter"></div>
@@ -1431,26 +1446,94 @@
 
     function doCollapseAll() {
       if (!_lastPretty) return;
-      // Build a temporary renderJSON run just to discover all foldable openers,
-      // then set every one to collapsed.
+      const allFolds = _getAllFolds();
+      allFolds.forEach(f => { _foldState[f.lineIdx] = true; });
+      _reRender();
+    }
+
+    // ── Level-based expand / collapse ──────────────────────────────
+    // Discover all foldable openers with their nesting depth.
+    // Returns [{lineIdx, depth}] sorted by lineIdx.
+    function _getAllFolds() {
       const lines = _lastPretty.split('\n');
       const n = lines.length;
+      const result = [];
       const stack = [];
       for (let i = 0; i < n; i++) {
         const trimmed = lines[i].trimEnd();
         const lastCh = trimmed.replace(/,$/, '').trim().slice(-1);
-        if (lastCh === '{' || lastCh === '[') stack.push({ lineIdx: i, ch: lastCh });
+        if (lastCh === '{' || lastCh === '[') {
+          stack.push({ lineIdx: i, ch: lastCh, depth: stack.length });
+        }
         const startCh = lines[i].trimStart()[0];
         if ((startCh === '}' || startCh === ']') && stack.length > 0) {
           const opener = stack.pop();
           const expected = opener.ch === '{' ? '}' : ']';
           if (startCh === expected && i - opener.lineIdx > 1) {
-            _foldState[opener.lineIdx] = true;
+            result.push({ lineIdx: opener.lineIdx, depth: opener.depth });
           }
         }
       }
+      return result;
+    }
+
+    // Get the maximum fold depth across all foldable nodes
+    function _getMaxFoldDepth() {
+      const folds = _getAllFolds();
+      if (!folds.length) return 0;
+      return Math.max(...folds.map(f => f.depth)) + 1;
+    }
+
+    // Get current "visible level": the deepest level that is still fully expanded.
+    // Returns 0 if everything is collapsed, maxDepth if everything is expanded.
+    function _getCurrentExpandLevel() {
+      const folds = _getAllFolds();
+      if (!folds.length) return 0;
+      // Check each depth level from 0 upwards. If all folds at that depth
+      // are expanded, that level is visible. Stop at first level where any fold is collapsed.
+      const maxD = Math.max(...folds.map(f => f.depth)) + 1;
+      for (let d = 0; d < maxD; d++) {
+        const atLevel = folds.filter(f => f.depth === d);
+        const anyCollapsed = atLevel.some(f => !!_foldState[f.lineIdx]);
+        if (anyCollapsed) return d;
+      }
+      return maxD; // all expanded
+    }
+
+    function doExpandLevel() {
+      if (!_lastPretty) return;
+      const folds = _getAllFolds();
+      if (!folds.length) return;
+      const currentLevel = _getCurrentExpandLevel();
+      const maxD = Math.max(...folds.map(f => f.depth)) + 1;
+      if (currentLevel >= maxD) {
+        showToast('已全部展开', 'success');
+        return;
+      }
+      // Expand all folds at current level (the first collapsed depth)
+      folds.filter(f => f.depth === currentLevel).forEach(f => {
+        delete _foldState[f.lineIdx];
+      });
       _reRender();
     }
+
+    function doCollapseLevel() {
+      if (!_lastPretty) return;
+      const folds = _getAllFolds();
+      if (!folds.length) return;
+      const currentLevel = _getCurrentExpandLevel();
+      if (currentLevel <= 0) {
+        showToast('已全部折叠', 'success');
+        return;
+      }
+      // Collapse all folds at (currentLevel - 1)
+      const targetLevel = currentLevel - 1;
+      folds.filter(f => f.depth === targetLevel).forEach(f => {
+        _foldState[f.lineIdx] = true;
+      });
+      _reRender();
+    }
+
 
     // ── Edit mode ─────────────────────────────────────────────────
     let _editMode = false;
@@ -1467,8 +1550,10 @@
       $('output').style.display = 'none';
       $('btnEditOutput').classList.add('edit-active');
       $('btnEditOutput').textContent = 'DONE';
-      $('foldActions').style.opacity = '0.35';
-      $('foldActions').style.pointerEvents = 'none';
+      $('foldActions').querySelectorAll('.panel-badge-btn:not(#btnEditOutput), .fold-sep').forEach(el => {
+        el.style.opacity = '0.35';
+        el.style.pointerEvents = 'none';
+      });
       $('errorDisplay').classList.remove('show');
       showToast('✏️  已进入编辑模式', 'success');
       $('outputEdit').focus();
@@ -1491,8 +1576,10 @@
         $('output').style.display = '';
         $('btnEditOutput').classList.remove('edit-active');
         $('btnEditOutput').textContent = 'EDIT';
-        $('foldActions').style.opacity = '';
-        $('foldActions').style.pointerEvents = '';
+        $('foldActions').querySelectorAll('.panel-badge-btn:not(#btnEditOutput), .fold-sep').forEach(el => {
+          el.style.opacity = '';
+          el.style.pointerEvents = '';
+        });
         requestAnimationFrame(() => { $('outputWrap').scrollTop = savedScroll; });
         return;
       }
@@ -1513,8 +1600,10 @@
         $('output').style.display = '';
         $('btnEditOutput').classList.remove('edit-active');
         $('btnEditOutput').textContent = 'EDIT';
-        $('foldActions').style.opacity = '';
-        $('foldActions').style.pointerEvents = '';
+        $('foldActions').querySelectorAll('.panel-badge-btn:not(#btnEditOutput), .fold-sep').forEach(el => {
+          el.style.opacity = '';
+          el.style.pointerEvents = '';
+        });
         showToast('✓  已应用编辑并重新格式化', 'success');
         // Restore scroll so user stays on the same line
         requestAnimationFrame(() => { $('outputWrap').scrollTop = savedScroll; });
@@ -1592,6 +1681,8 @@
     $('btnClear').addEventListener('click', doClear);
     $('btnExpandAll').addEventListener('click', doExpandAll);
     $('btnCollapseAll').addEventListener('click', doCollapseAll);
+    $('btnExpandLevel').addEventListener('click', doExpandLevel);
+    $('btnCollapseLevel').addEventListener('click', doCollapseLevel);
     $('btnEditOutput').addEventListener('click', () => {
       _editMode ? exitEditMode() : enterEditMode();
     });
