@@ -1,2 +1,6 @@
-# json-formatter
-一个好用的JSON格式化工具
+# json-formatter 🚀
+
+这是一个超级好用的本地 JSON 格式化工具！用了你就知道有多好用啦~ 
+
+👉 **快速开始**
+不需要折腾任何环境，只要在浏览器里打开 `json-formatter.html` 就可以直接用咯，主打一个简单又贴心！🥰
